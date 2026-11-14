@@ -9,6 +9,7 @@ from astropy.coordinates import SkyCoord
 from astropy.io import fits
 from astropy.time import Time
 from astropy.utils.data import download_file
+from astropy.visualization import AsinhStretch
 from astropy.wcs import WCS
 from astroquery.ipac.irsa import Irsa
 from reproject import reproject_interp
@@ -18,6 +19,7 @@ PIXEL_SCALE_ARCSEC = 6.15
 MWIR_MIN_WAVELENGTH_M = 3e-6  # em_min above this = MWIR detectors (4-6)
 DOWNLOAD_RETRIES = 3
 MIN_COVERAGE = 0.9  # drop frames whose cutout covers less than 90% of the grid
+ASINH_SOFTENING = 0.002  # smaller = more boost for faint pixels (0.002 chosen visually on Barnard)
 
 warnings.simplefilter("ignore")  # SPHEREx headers trigger harmless SIP/WCS warnings
 log.setLevel("ERROR")
@@ -126,11 +128,16 @@ def _build_frame(row, target, size_deg, side_px):
 
 
 def _apply_common_scale(frames):
-    """Normalize all images to 0-1 with the same limits, so brightness is comparable."""
+    """Normalize all images to 0-1 with the same limits and an asinh stretch.
+
+    asinh is linear for faint pixels and logarithmic for bright ones, so faint
+    background stars stay visible next to a very bright target.
+    """
     if not frames:
         return
     all_pixels = np.concatenate([f["image"].ravel() for f in frames])
     low, high = np.nanpercentile(all_pixels, [1, 99.5])
+    stretch = AsinhStretch(a=ASINH_SOFTENING)
     for frame in frames:
-        scaled = (frame["image"] - low) / (high - low)
-        frame["image"] = np.nan_to_num(np.clip(scaled, 0, 1), nan=0.0)
+        scaled = np.clip((frame["image"] - low) / (high - low), 0, 1)
+        frame["image"] = np.nan_to_num(stretch(scaled), nan=0.0)

@@ -1,6 +1,6 @@
 import streamlit as st
 import numpy as np
-from core.frames import get_frames
+from core.spherex import get_frames
 
 DISPLAY_ZOOM = 12  # each SPHEREx pixel is shown as a 12x12 block (sharp, no blur)
 
@@ -18,9 +18,8 @@ size_deg = st.number_input("Field size (deg)", value=0.05, format="%.3f")
 
 if st.button("Barnard's Star"):
     with st.spinner("Downloading SPHEREx images..."):
-        frames = get_frames(ra, dec, size_deg)
-        # With the real backend (core.spherex), also pass:
-        # pm_ra_mas_yr=-801.551, pm_dec_mas_yr=10362.394
+        # Barnard's Star proper motion from SIMBAD (mas/yr)
+        frames = get_frames(ra, dec, size_deg, pm_ra_mas_yr=-801.551, pm_dec_mas_yr=10362.394)
     st.session_state["frames"] = frames
 
 if "frames" in st.session_state:

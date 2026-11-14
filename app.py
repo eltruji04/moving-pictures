@@ -29,12 +29,21 @@ for column, target in zip(columns, TARGETS):
             st.session_state["source"] = "demo: " + target["label"]
 
 
+if st.button("Search SPHEREx live (~3 min)"):
+    with st.spinner("Downloading SPHEREx images..."):
+        frames = get_frames(ra, dec, size_deg)
+    st.session_state["frames"] = frames
+    st.session_state["source"] = "live"
+
+
 if "frames" in st.session_state:
     frames = st.session_state["frames"]
 
     if len(frames) == 0:
         st.warning("No SPHEREx data found for this position")
     else:
+        if st.session_state["source"].startswith("demo"):
+            st.info("DEMO MODE: saved data, field size fixed at 0.05°.")
         i = st.slider("Frame", 0, len(frames) - 1, 0)
         frame = frames[i]
 

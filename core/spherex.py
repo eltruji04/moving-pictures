@@ -13,6 +13,7 @@ from astropy.visualization import AsinhStretch
 from astropy.wcs import WCS
 from astroquery.ipac.irsa import Irsa
 from reproject import reproject_interp
+from scipy.ndimage import maximum_filter
 
 COLLECTION = "spherex_dr1"
 PIXEL_SCALE_ARCSEC = 6.15
@@ -50,8 +51,27 @@ def get_frames(ra_deg, dec_deg, size_deg, pm_ra_mas_yr=0.0, pm_dec_mas_yr=0.0, n
         if frame is not None:
             frames.append(frame)
 
+    _fill_holes(frames)  # must run before scaling, which turns any remaining NaN into 0
     _apply_common_scale(frames)
     return frames
+
+
+def _fill_holes(frames):
+    """Fill empty (NaN) pixels with the brightest neighbor in a 5x5 window.
+
+    Saturated star cores become bright; isolated bad pixels blend into the background.
+    """
+    for frame in frames:
+        image = frame["image"]
+        holes = np.isnan(image)  # True where the pixel is empty
+        if not holes.any():
+            continue
+
+        filled = np.copy(image)
+        filled[holes] = -np.inf  # so an empty pixel never wins the maximum
+        neighbor_max = maximum_filter(filled, size=5)
+        image[holes] = neighbor_max[holes]
+        frame["image"] = image
 
 
 def _query_images(target):

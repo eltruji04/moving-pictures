@@ -57,10 +57,20 @@ def get_frames(ra_deg, dec_deg, size_deg, pm_ra_mas_yr=0.0, pm_dec_mas_yr=0.0, n
 def _query_images(target):
     # Search near the target's position around the middle of the mission
     position_now = target.apply_space_motion(new_obstime=Time("2026-01-01"))
-    results = Irsa.query_sia(pos=(position_now, 1 * u.arcsec), collection=COLLECTION)
-    results = results[results["em_min"] > MWIR_MIN_WAVELENGTH_M]
-    results.sort("t_min")
-    return results
+
+
+    for attempt in range(DOWNLOAD_RETRIES):
+        try:
+            results = Irsa.query_sia(pos=(position_now, 1 * u.arcsec), collection=COLLECTION)
+            results = results[results["em_min"] > MWIR_MIN_WAVELENGTH_M]
+            results.sort("t_min")
+            return results
+        
+        except Exception:
+            if attempt < DOWNLOAD_RETRIES - 1:
+                time.sleep(3)
+            else:
+                return []
 
 
 def _spread_in_time(rows, n_frames):

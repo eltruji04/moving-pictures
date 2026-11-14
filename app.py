@@ -1,6 +1,9 @@
 import streamlit as st
 import numpy as np
 from core.spherex import get_frames
+from core.targets import TARGETS
+from core.demo import load_frames
+
 
 DISPLAY_ZOOM = 12  # each SPHEREx pixel is shown as a 12x12 block (sharp, no blur)
 
@@ -16,11 +19,15 @@ ra = st.number_input("RA (deg)", value=269.452, format="%.4f")
 dec = st.number_input("Dec (deg)", value=4.693, format="%.4f")
 size_deg = st.number_input("Field size (deg)", value=0.05, format="%.3f")
 
-if st.button("Barnard's Star"):
-    with st.spinner("Downloading SPHEREx images..."):
-        # Barnard's Star proper motion from SIMBAD (mas/yr)
-        frames = get_frames(ra, dec, size_deg, pm_ra_mas_yr=-801.551, pm_dec_mas_yr=10362.394)
-    st.session_state["frames"] = frames
+
+st.subheader("Try a test object (saved demo data)")
+columns = st.columns(5)
+for column, target in zip(columns, TARGETS):
+    with column:
+        if st.button(target["label"]):
+            st.session_state["frames"] = load_frames(target["file_name"]) 
+            st.session_state["source"] = "demo: " + target["label"]
+
 
 if "frames" in st.session_state:
     frames = st.session_state["frames"]

@@ -3,3 +3,4 @@ CLAUDE.md
 scripts/header_dump.txt
 __pycache__/
 *.pyc
+scripts/*.png

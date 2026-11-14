@@ -165,8 +165,13 @@ def _apply_common_scale(frames):
     """
     if not frames:
         return
+    # Each frame has its own sky level (different wavelength, zodiacal light), so subtract
+    # each frame's median first; then the background sits at 0 in every frame
+    for frame in frames:
+        frame["image"] = frame["image"] - np.nanmedian(frame["image"])
     all_pixels = np.concatenate([f["image"].ravel() for f in frames])
-    low, high = np.nanpercentile(all_pixels, [1, 99.5])
+    low = 0.0
+    high = np.nanpercentile(all_pixels, 99.5)
     stretch = AsinhStretch(a=ASINH_SOFTENING)
     for frame in frames:
         scaled = np.clip((frame["image"] - low) / (high - low), 0, 1)

@@ -3,6 +3,7 @@ import numpy as np
 from core.spherex import get_frames
 from core.targets import TARGETS
 from core.demo import load_frames
+from core.animate import make_blink_gif
 
 
 DISPLAY_ZOOM = 12  # each SPHEREx pixel is shown as a 12x12 block (sharp, no blur)
@@ -44,6 +45,8 @@ if "frames" in st.session_state:
     else:
         if st.session_state["source"].startswith("demo"):
             st.info("DEMO MODE: saved data, field size fixed at 0.05°.")
+        gif = make_blink_gif(frames)
+        st.image(gif)
         i = st.slider("Frame", 0, len(frames) - 1, 0)
         frame = frames[i]
 

@@ -1,2 +1,5 @@
 CLAUDE.md
 .venv
+scripts/header_dump.txt
+__pycache__/
+*.pyc

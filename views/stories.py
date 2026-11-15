@@ -2,22 +2,24 @@ import re
 
 import streamlit as st
 from core.animate import make_blink_gif
-from core.content import read_markdown
 from core.demo import crop_frames, demo_name, load_frames
 from core.targets import TARGETS
+from i18n import read_content, t
 
 STORY_FIELD_DEG = 0.1  # close field: shows the motion best
 STORY_WIDTH_PX = 600
 MOVERS = {"barnard", "eps_ind_b", "wise_0855"}  # the other two change brightness
-FACT_NAMES = ["Type", "Distance", "Visual magnitude"]
 
 
 def split_story(text):
     """Split a story file into its parts. Missing parts come back empty."""
     title = re.search(r"^# (.+)$", text, flags=re.MULTILINE)
-    tagline = re.search(r"^### \*([^*].*?)\*\s*$", text, flags=re.MULTILINE)
+    tagline = re.search(r"^### \*([^*¿].*?)#*\*\s*$", text, flags=re.MULTILINE)
     facts = dict(re.findall(r"^- \*\*(.+?):\*\*\s*(.+)$", text, flags=re.MULTILINE))
-    body, _, did_you_know = text.partition("### *Did you know?*")
+    # "### *Did you know?*" in English, "### *¿Sabías que...?*" in Spanish
+    parts = re.split(r"^### \*(?:Did you know\?|¿Sabías que\.*\?)\*\s*$", text,
+                     maxsplit=1, flags=re.MULTILINE)
+    body, did_you_know = parts[0], (parts[1] if len(parts) > 1 else "")
     # Body = everything after the fact list
     body_lines = [line for line in body.splitlines()
                   if not line.startswith(("# ", "### ", "- **"))]
@@ -36,24 +38,27 @@ def open_in_explore(target):
     st.switch_page("views/explore.py")
 
 
-st.title("Stories")
-st.caption("Five objects, five reasons to look twice. Three stars that move, two that change brightness. "
-           "(🌌 moves across the sky · ✨ changes brightness)")
+st.title(t("Stories", "Historias"))
+st.caption(t("Five objects, five reasons to look twice. Three stars that move, two that change brightness. "
+             "(🌌 moves across the sky · ✨ changes brightness)",
+             "Cinco objetos, cinco razones para mirar dos veces. Tres estrellas que se mueven y dos que "
+             "cambian de brillo. (🌌 se mueve en el cielo · ✨ cambia de brillo)"))
 
-tabs = st.tabs([("🌌 " if t["file_name"] in MOVERS else "✨ ") + t["label"] for t in TARGETS])
+tabs = st.tabs([("🌌 " if target["file_name"] in MOVERS else "✨ ") + target["label"] for target in TARGETS])
 
 for tab, target in zip(tabs, TARGETS):
     with tab:
         moves = target["file_name"] in MOVERS
-        story = split_story(read_markdown("stories/" + target["file_name"] + ".md"))
+        story = split_story(read_content("stories/" + target["file_name"] + ".md"))
         text_col, gif_col = st.columns([3, 2], gap="large")
         with text_col:
-            st.badge("Moves across the sky" if moves else "Changes brightness",
+            st.badge(t("Moves across the sky", "Se mueve en el cielo") if moves
+                     else t("Changes brightness", "Cambia de brillo"),
                      icon="🌌" if moves else "✨", color="gray")
             st.markdown(f"# {story['title'] or target['label']}")
             if story["tagline"]:
                 st.markdown(f"### *{story['tagline']}*")
-            facts = [(name, story["facts"][name]) for name in FACT_NAMES if name in story["facts"]]
+            facts = list(story["facts"].items())[:3]  # Type, Distance, Visual magnitude (or Tipo…)
             if facts:
                 for column, (name, value) in zip(st.columns(len(facts)), facts):
                     with column:
@@ -61,8 +66,8 @@ for tab, target in zip(tabs, TARGETS):
                         st.markdown(f"**{value}**")
             st.markdown(story["body"])
             if story["did_you_know"]:
-                st.info(f"**Did you know?** {story['did_you_know']}", icon="💡")
-            if st.button("Explore it yourself", icon="🔭", key="explore_" + target["file_name"]):
+                st.info(f"**{t('Did you know?', '¿Sabías que...?')}** {story['did_you_know']}", icon="💡")
+            if st.button(t("Explore it yourself", "Exploralo vos"), icon="🔭", key="explore_" + target["file_name"]):
                 open_in_explore(target)
         with gif_col:
             saved = load_frames(demo_name(target["file_name"], track_target=False))
@@ -70,4 +75,5 @@ for tab, target in zip(tabs, TARGETS):
             if len(frames) > 0:
                 zoom = max(1, STORY_WIDTH_PX // frames[0]["image"].shape[0])
                 st.image(make_blink_gif(frames, zoom=zoom))
-                st.caption(f"SPHEREx data, {len(frames)} frames · fixed sky, {STORY_FIELD_DEG}° field")
+                st.caption(t(f"SPHEREx data, {len(frames)} frames · fixed sky, {STORY_FIELD_DEG}° field",
+                             f"Datos de SPHEREx, {len(frames)} cuadros · cielo fijo, campo de {STORY_FIELD_DEG}°"))

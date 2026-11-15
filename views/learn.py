@@ -1,17 +1,18 @@
 import re
 
 import streamlit as st
-from core.content import read_markdown
+from i18n import read_content, t
 
-TAB_ICONS = {"SPHEREx": "🛰️", "Visual magnitude": "✨", "Infrared": "🌡️"}
+TAB_ICONS = ["🛰️", "✨", "🌡️"]  # in the order of the sections in learn.md
 
-st.title("Learn")
-st.caption("The ideas behind the blink, in three short reads.")
+st.title(t("Learn", "Aprender"))
+st.caption(t("The ideas behind the blink, in three short reads.",
+             "Las ideas detrás del blink, en tres lecturas cortas."))
 
 # learn.md: "# Learn", then one "## SECTION" per tab
-sections = re.split(r"^## ", read_markdown("learn.md"), flags=re.MULTILINE)[1:]
+sections = re.split(r"^## ", read_content("learn.md"), flags=re.MULTILINE)[1:]
 if not sections:
-    st.markdown(read_markdown("learn.md"))
+    st.markdown(read_content("learn.md"))
     st.stop()
 
 names = []
@@ -19,7 +20,8 @@ for section in sections:
     heading = section.splitlines()[0].replace("*", "").strip()
     names.append("SPHEREx" if heading.upper() == "SPHEREX" else heading.capitalize())
 
-tabs = st.tabs([f"{TAB_ICONS.get(name, '📘')} {name}" for name in names])
+icons = TAB_ICONS + ["📘"] * len(names)
+tabs = st.tabs([f"{icon} {name}" for icon, name in zip(icons, names)])
 for tab, name, section in zip(tabs, names, sections):
     with tab:
         body = section.split("\n", 1)[1] if "\n" in section else ""
@@ -30,9 +32,10 @@ for tab, name, section in zip(tabs, names, sections):
             rest = body
         if name == "SPHEREx":
             # Figures quoted from the SPHEREx paragraph of learn.md
-            facts = [("Spectral channels", "102", None),
-                     ("Wavelength range", "0.75–5 µm", "near-infrared"),
-                     ("Coverage", "Whole sky", None)]
+            facts = [(t("Spectral channels", "Canales espectrales"), "102", None),
+                     (t("Wavelength range", "Rango de longitud de onda"), "0.75–5 µm",
+                      t("near-infrared", "infrarrojo cercano")),
+                     (t("Coverage", "Cobertura"), t("Whole sky", "Todo el cielo"), None)]
             for column, (label, value, note) in zip(st.columns(3), facts):
                 with column:
                     with st.container(border=True, height="stretch"):
@@ -42,5 +45,7 @@ for tab, name, section in zip(tabs, names, sections):
                             st.caption(note)
         st.markdown(rest)
         if name == "SPHEREx":
-            st.info("**Key idea:** each SPHEREx frame sees a slightly different wavelength, so some "
-                    "brightness changes between frames are color, not real variation.", icon="💡")
+            st.info(t("**Key idea:** each SPHEREx frame sees a slightly different wavelength, so some "
+                      "brightness changes between frames are color, not real variation.",
+                      "**Idea clave:** cada cuadro de SPHEREx ve una longitud de onda un poco distinta, así que "
+                      "algunos cambios de brillo entre cuadros son color, no variación real."), icon="💡")

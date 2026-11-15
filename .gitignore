@@ -4,3 +4,4 @@ scripts/header_dump.txt
 __pycache__/
 *.pyc
 scripts/*.png
+*.DS_Store

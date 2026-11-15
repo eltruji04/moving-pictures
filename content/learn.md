@@ -34,7 +34,8 @@ When a celestial body does not emit or transmit visible light (such as ultra-coo
 ## **INFRARED**
 ### ***Why use infrared?***
 Using infrared light is essential in astronomy for three main reasons:
-•	***Detects cold and faint objects:*** Bodies like brown dwarfs, planets, or very small stars (such as Barnard's Star) lack enough temperature to shine brightly in visible light, yet they radiate most of their energy as infrared heat.
-•	***Penetrates cosmic dust:*** Clouds of gas and dust in space block visible light, hiding regions where new stars are born (such as the environment around RW Aurigae). Infrared radiation has a longer wavelength that passes right through these clouds, allowing telescopes to see what lies behind them.
-•	***Studies the distant universe:*** Due to the expansion of the universe, light from the oldest and most distant galaxies stretches into longer wavelengths (redshift), reaching us primarily in the infrared spectrum.
+
+- ***Detects cold and faint objects:*** Bodies like brown dwarfs, planets, or very small stars (such as Barnard's Star) lack enough temperature to shine brightly in visible light, yet they radiate most of their energy as infrared heat.
+- ***Penetrates cosmic dust:*** Clouds of gas and dust in space block visible light, hiding regions where new stars are born (such as the environment around RW Aurigae). Infrared radiation has a longer wavelength that passes right through these clouds, allowing telescopes to see what lies behind them.
+- ***Studies the distant universe:*** Due to the expansion of the universe, light from the oldest and most distant galaxies stretches into longer wavelengths (redshift), reaching us primarily in the infrared spectrum.
 

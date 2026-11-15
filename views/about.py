@@ -2,8 +2,8 @@ import streamlit as st
 
 # Draft text: team members must check names and roles before submitting
 TEAM = [
-    ("Santiago", "Data, integration and deployment"),
-    ("Lucía", "Interface, texts, slides and videos"),
+    ("Santiago", "Interface and web app"),
+    ("Lucía", "Research, writing and slides"),
 ]
 
 st.title("About")

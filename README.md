@@ -296,7 +296,6 @@ We used AI assistants (Claude Code and Claude) as a support tool, not as the aut
 Scientific values shown in the app (positions, proper motions, dates, wavelengths) come from
 SIMBAD and from the SPHEREx data itself, not from the AI.
 
-<!-- TODO: confirm whether Lucía used AI tools and add it here if so. -->
 
 ---
 

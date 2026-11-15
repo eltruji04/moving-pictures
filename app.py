@@ -4,6 +4,7 @@ from core.spherex import get_frames
 from core.targets import TARGETS
 from core.demo import load_frames
 from core.animate import make_blink_gif
+from core.coords import parse_coords
 
 
 DISPLAY_ZOOM = 12  # each SPHEREx pixel is shown as a 12x12 block (sharp, no blur)
@@ -16,8 +17,17 @@ st.set_page_config(
 
 st.title("Explorador estelar")
 
-ra = st.number_input("RA (deg)", value=269.452, format="%.4f")
-dec = st.number_input("Dec (deg)", value=4.693, format="%.4f")
+coords_text = st.text_input(
+    "Coordinates (RA Dec)",
+    value="269.452 4.693",
+    help="Decimal degrees (269.452 4.693) or sexagesimal (17:57:48.5 +04:41:36)",
+)
+coords = parse_coords(coords_text)
+if coords is None:
+    st.error("Can't read those coordinates. Try 269.452 4.693 or 17:57:48.5 +04:41:36")
+else:
+    ra, dec = coords
+    st.caption(f"Read as RA = {ra:.4f}°, Dec = {dec:.4f}°")
 size_deg = st.number_input("Field size (deg)", value=0.05, format="%.3f")
 
 
@@ -30,7 +40,7 @@ for column, target in zip(columns, TARGETS):
             st.session_state["source"] = "demo: " + target["label"]
 
 
-if st.button("Search SPHEREx live (~3 min)"):
+if st.button("Search SPHEREx live (~3 min)", disabled=coords is None):
     with st.spinner("Downloading SPHEREx images..."):
         frames = get_frames(ra, dec, size_deg)
     st.session_state["frames"] = frames

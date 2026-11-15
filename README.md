@@ -78,7 +78,7 @@ Two steps deserve a note:
 ## The five test objects
 
 The challenge requires five test objects. Positions and proper motions come from
-[SIMBAD](https://simbad.cds.unistra.fr/simbad/) (queried 2026-11-14 via the Harvard mirror).
+[SIMBAD](https://simbad.cfa.harvard.edu/simbad/) (queried 2026-11-14 via the Harvard mirror).
 
 | Object | Why it's interesting | What to look for |
 |---|---|---|
@@ -213,7 +213,7 @@ We want to be upfront about what this tool can and can't show.
 
 - **SPHEREx** images: NASA/JPL-Caltech, served by
   [IRSA](https://irsa.ipac.caltech.edu/) (NASA/IPAC Infrared Science Archive), collection `spherex_dr1`.
-- **Positions and proper motions:** [SIMBAD](https://simbad.cds.unistra.fr/simbad/), CDS, Strasbourg.
+- **Positions and proper motions:** [SIMBAD](https://simbad.cfa.harvard.edu/simbad/) (CDS, Strasbourg), queried via its Harvard mirror.
 - **Software:** [Astropy](https://www.astropy.org/), [astroquery](https://astroquery.readthedocs.io/),
   [reproject](https://reproject.readthedocs.io/), [NumPy](https://numpy.org/),
   [SciPy](https://scipy.org/), [Pillow](https://python-pillow.org/),

@@ -1,1 +1,256 @@
-# moving-pictures
+# Moving Pictures
+
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://moving-pictures.streamlit.app/)
+[![NASA Space Apps 2026](https://img.shields.io/badge/NASA%20Space%20Apps-2026-0B3D91)](https://www.spaceappschallenge.org/)
+[![Python](https://img.shields.io/badge/python-3.14-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Streamlit](https://img.shields.io/badge/streamlit-1.67-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
+[![Astropy](https://img.shields.io/badge/astropy-8.0-orange)](https://www.astropy.org/)
+[![Data: SPHEREx / IRSA](https://img.shields.io/badge/data-SPHEREx%20%2F%20IRSA-blueviolet)](https://irsa.ipac.caltech.edu/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
+**Blink SPHEREx infrared images through time to spot stars that move or change.**
+
+🔭 **Live app:** https://moving-pictures.streamlit.app/
+
+Built by team **Sidereus Nuncius** (Montevideo, Uruguay) for the **NASA Space Apps Challenge 2026**,
+challenge *Planet X and SPHEREx*.
+
+![Barnard's Star blink](docs/barnard.gif)
+
+---
+
+## What is this?
+
+In 1930, Clyde Tombaugh found Pluto by "blinking" two photographs of the same patch of sky taken
+days apart: anything that jumped between them was something nearby that was moving. People still
+look for a hypothetical distant "Planet X" the same way.
+
+**Moving Pictures** lets anyone do that with real, recent data from NASA's **SPHEREx** space
+telescope, which maps the whole sky in the infrared. You type a position on the sky (or pick one of
+five famous objects), and the app downloads SPHEREx images of that spot taken on different dates,
+lines them up and plays them as an animation. Stars that move, or that change in brightness, stand out.
+
+The app is meant for **curious people, not specialists**. It tries to *teach* what you're looking
+at, not just show it.
+
+---
+
+## How it works
+
+```
+ coordinates (RA/Dec)
+        │
+        ▼
+ 1. Search    IRSA SIA query, collection spherex_dr1: every SPHEREx image covering that point
+        │
+        ▼
+ 2. Select    up to 12 images spread evenly across the observation dates
+        │
+        ▼
+ 3. Cutout    download only a small cutout of each image (full images are ~62 MB each)
+        │
+        ▼
+ 4. Align     move the target position to each image's date (proper motion), then reproject
+              every cutout onto the same north-up grid; drop cutouts covering less than 90%
+        │
+        ▼
+ 5. Measure   read the observation date (DATE-OBS), the detector, and the wavelength
+              at the target's exact pixel (SPHEREx's wavelength changes across each detector)
+        │
+        ▼
+ 6. Scale     subtract each frame's sky background, then apply ONE common asinh brightness
+              scale to all frames, so brightness changes are real, not display artifacts
+        │
+        ▼
+ 7. Blink     animated GIF with a cross on the target and the date + wavelength on each frame
+```
+
+Two steps deserve a note:
+
+- **Reprojection is required, not cosmetic.** SPHEREx visits from August 2025 come rotated by about
+  180° compared with those from 2026. Without putting every frame on a common north-up grid, the
+  blink would be meaningless.
+- **Same brightness scale for every frame.** If each image were stretched on its own, a star could
+  look brighter or fainter just because of the display. One shared scale avoids that.
+
+---
+
+## The five test objects
+
+The challenge requires five test objects. Positions and proper motions come from
+[SIMBAD](https://simbad.cds.unistra.fr/simbad/) (queried 2026-11-14 via the Harvard mirror).
+
+| Object | Why it's interesting | What to look for |
+|---|---|---|
+| **Barnard's Star** | The star with the largest proper motion seen from Earth | A small shift relative to background stars |
+| **Epsilon Indi B** | A pair of brown dwarfs near the Sun, with high proper motion | A small shift |
+| **WISE 0855−0714** | One of the coldest known brown dwarfs, very close to the Sun | Very faint; see [Limitations](#limitations) |
+| **RW Aurigae** | A young, irregular variable star | Brightness changes, not motion |
+| **R Draconis** | A long-period (Mira-type) variable star | Brightness changes, not motion |
+
+The first three are tested for **motion**; the last two for **variability**.
+
+---
+
+## Features
+
+- **Coordinate input** in decimal degrees (`269.452 4.693`) or sexagesimal
+  (`17:57:48.5 +04:41:36`, `17h57m48.5s +04d41m36s`, `17 57 48.5 +04 41 36`).
+- **Five one-click test objects**, loaded from saved data and clearly labeled **DEMO MODE**.
+- **Live search** of the SPHEREx archive at IRSA for any position (takes ~3 minutes).
+- **Adjustable field size** for live searches.
+- **Blink GIF** with a fixed cross on the target and date and wavelength on every frame.
+- **Frame-by-frame slider**, shown with sharp, unsmoothed pixels, with date, wavelength and detector.
+- **Multipage app:** Home, Explore, Stories, Learn, About.
+
+---
+
+## Run it locally
+
+Requires Python 3 (tested on macOS and Windows).
+
+```bash
+git clone https://github.com/eltruji04/moving-pictures.git
+cd moving-pictures
+```
+
+Create and activate a virtual environment:
+
+```bash
+# macOS / Linux
+python3 -m venv venv
+source venv/bin/activate
+```
+
+```powershell
+# Windows
+python -m venv venv
+.\venv\Scripts\activate
+```
+
+Install the dependencies and start the app:
+
+```bash
+pip install -r requirements.txt
+streamlit run app.py
+```
+
+The app opens at http://localhost:8501.
+
+### Rebuilding the demo data
+
+The demo data for the five test objects lives in `data/demo/*.npz`. To regenerate it from IRSA
+(slow; needs a good connection):
+
+```bash
+python -m scripts.build_demo
+```
+
+---
+
+## Repository structure
+
+```
+.
+├── app.py              # Streamlit entry point: multipage navigation
+├── views/              # One file per page: home, explore, stories, learn, about
+├── core/               # Data side; knows nothing about the web interface
+│   ├── spherex.py      # Search, cutouts, alignment, wavelength, common brightness scale
+│   ├── frames.py       # Fake get_frames (random noise) used while developing the UI
+│   ├── coords.py       # Parse RA/Dec in decimal or sexagesimal
+│   ├── targets.py      # The five test objects (SIMBAD positions and proper motions)
+│   ├── animate.py      # Blink GIF with target cross and date/wavelength label
+│   ├── demo.py         # Save/load processed frames for demo mode
+│   └── content.py      # Read page texts from content/
+├── content/            # Markdown texts for pages and stories
+├── data/demo/          # Saved frames for the five test objects
+├── scripts/            # Demo builder and FITS exploration tools
+├── requirements.txt
+└── LICENSE
+```
+
+The data side and the interface meet at a single function:
+
+```python
+get_frames(ra_deg, dec_deg, size_deg) -> list[dict]
+# each dict: {"image": 2D array (same shape for all), "date": datetime,
+#             "wavelength_um": float, "detector": int}
+# returns [] if no data is found
+```
+
+---
+
+## Limitations
+
+We want to be upfront about what this tool can and can't show.
+
+- **The time span is short.** The `spherex_dr1` data we use covers only about 8–9 months
+  (August 2025 to May 2026). Even Barnard's Star, the fastest-moving star in the sky, shifts by only
+  about **1.2 pixels** in that time (a SPHEREx pixel is ~6.15″). The motion is real but subtle; don't
+  expect a star racing across the frame.
+- **Every frame is at a different wavelength.** SPHEREx is a spectral survey: each image sees a
+  slightly different infrared color, and the two detector groups cover roughly 0.75–2.4 µm and
+  2.4–5 µm (approximate). A brightness change between frames **can be a color effect, not real
+  variability**. This matters most for RW Aurigae and R Draconis, so the app always shows the
+  wavelength of each frame.
+- **WISE 0855−0714 is not visible.** It is extremely faint, and its catalog position may not be at
+  epoch J2000, so our proper-motion correction may point slightly off.
+- **Cosmic rays and hot pixels are not masked.** Spots that appear in a single frame are usually
+  detector artifacts, not real objects.
+- **Saturated stars.** The cores of very bright stars (like R Draconis) are saturated in SPHEREx.
+  We fill those empty pixels from their neighbors, so the core looks bright, but its brightness
+  there is not a real measurement.
+- **Live search does not correct for proper motion.** The five demo objects are corrected using
+  SIMBAD data; for an arbitrary position typed by the user, the app assumes the object is fixed.
+- **Live search is slow and fragile.** It takes about 3 minutes, and IRSA often answers with
+  temporary errors (502/503). The app retries, but a search can still fail; the demo mode exists for
+  that reason.
+- **It's a hackathon project.** Built in one weekend; no automated tests. Not a scientific tool.
+
+---
+
+## Data sources and credits
+
+- **SPHEREx** images: NASA/JPL-Caltech, served by
+  [IRSA](https://irsa.ipac.caltech.edu/) (NASA/IPAC Infrared Science Archive), collection `spherex_dr1`.
+- **Positions and proper motions:** [SIMBAD](https://simbad.cds.unistra.fr/simbad/), CDS, Strasbourg.
+- **Software:** [Astropy](https://www.astropy.org/), [astroquery](https://astroquery.readthedocs.io/),
+  [reproject](https://reproject.readthedocs.io/), [NumPy](https://numpy.org/),
+  [SciPy](https://scipy.org/), [Pillow](https://python-pillow.org/),
+  [Streamlit](https://streamlit.io/).
+
+---
+
+## Use of AI
+
+We used AI assistants (Claude Code and Claude) as a support tool, not as the author of the project.
+
+- **Code:** about 90% of the code was written by us. The AI was used mainly to help fix bugs,
+  get unstuck when we were blocked, translate code to English and write comments. Every piece of
+  AI-suggested code was reviewed and understood before it went into the project.
+- **Project discussion:** Claude was used to talk through parts of the project not related to code.
+- **Content:** all texts in the app (stories, Learn and About pages) were written by us. No images,
+  audio or video were generated with AI.
+- **Documentation:** this README was drafted with AI help and reviewed by the team.
+
+Scientific values shown in the app (positions, proper motions, dates, wavelengths) come from
+SIMBAD and from the SPHEREx data itself, not from the AI.
+
+<!-- TODO: confirm whether Lucía used AI tools and add it here if so. -->
+
+---
+
+## Team: Sidereus Nuncius
+
+| | Integrante | Área |
+|---|---|---|
+| <img src="https://github.com/eltruji04.png" width="40"> | [Santiago Trujillo](https://github.com/eltruji04) | data pipeline, integration and deployment |
+| <img src="https://github.com/luciahermon.png" width="40"> | [Lucía Hernández](https://github.com/luciahermon) | user interface, texts, slides and videos |
+
+Named after Galileo's *Sidereus Nuncius* (1610), the first book of observations made with a telescope.
+
+---
+
+## License
+
+[MIT](LICENSE) © 2026

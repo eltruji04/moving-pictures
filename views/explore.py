@@ -2,7 +2,8 @@ import streamlit as st
 import numpy as np
 from core.spherex import get_frames
 from core.targets import TARGETS, proper_motion_for
-from core.demo import crop_frames, demo_name, load_frames
+from core.demo import crop_frames, demo_name, load_frames, wise_name
+from core.wise import get_wise_frame
 from core.animate import average_by_visit, make_blink_gif, make_difference_image
 from core.coords import parse_coords
 
@@ -30,6 +31,11 @@ FIXED_SKY = "Fixed sky: watch the star move"
 FOLLOW_STAR = "Follow the star: the background moves"
 mode = st.radio("View", [FIXED_SKY, FOLLOW_STAR], horizontal=True)
 st.caption("Demo objects update at once; for a live search, search again after changing the view.")
+include_wise = st.checkbox(
+    "Add an older image from WISE (2010)",
+    help="WISE is another infrared telescope. 15 years apart, a fast star's motion is easy "
+         "to see. Its brightness is scaled on its own and can't be compared with SPHEREx.",
+)
 
 
 st.subheader("Try a test object (saved demo data)")
@@ -55,6 +61,12 @@ if st.button("Search SPHEREx live (~1 min)", disabled=coords is None):
                 on_progress=update_bar,
                 track_target=(mode == FOLLOW_STAR),
             )
+            wise_frame = None
+            if include_wise:
+                bar.progress(1.0, text="Searching WISE...")
+                wise_frame = get_wise_frame(
+                    ra, dec, size_deg, pm_ra, pm_dec, track_target=(mode == FOLLOW_STAR)
+                )
     except Exception as error:
         bar.empty()
         st.session_state.pop("frames", None)  # don't keep showing an old result
@@ -66,6 +78,8 @@ if st.button("Search SPHEREx live (~1 min)", disabled=coords is None):
     else:
         bar.empty()
         st.session_state["frames"] = frames
+        st.session_state["live_wise"] = [wise_frame] if wise_frame is not None else []
+        st.session_state["live_has_wise"] = include_wise
         st.session_state["live_size_deg"] = size_deg
         st.session_state["source"] = "live"
 
@@ -76,9 +90,18 @@ if st.session_state.get("source") == "demo":
     target = st.session_state["demo_target"]
     saved = load_frames(demo_name(target["file_name"], mode == FOLLOW_STAR))
     frames = crop_frames(saved, size_deg)
-    st.info(f"DEMO MODE: saved SPHEREx data for {target['label']}.")
+    if include_wise and frames:
+        wise = load_frames(wise_name(target["file_name"], mode == FOLLOW_STAR), telescope="WISE")
+        frames = crop_frames(wise, size_deg) + frames
+    st.info(f"DEMO MODE: saved data for {target['label']}.")
 elif st.session_state.get("source") == "live" and "frames" in st.session_state:
     frames = st.session_state["frames"]
+    if include_wise and frames:
+        if not st.session_state.get("live_has_wise"):
+            st.caption("Search again to add the WISE image.")
+        elif not st.session_state["live_wise"]:
+            st.caption("No WISE image covers this field.")
+        frames = st.session_state["live_wise"] + frames
     if size_deg <= st.session_state["live_size_deg"]:
         frames = crop_frames(frames, size_deg)
     else:
@@ -104,7 +127,8 @@ if frames is not None:
         st.image(image, clamp=True)
         st.caption(
             f"{frame['date']:%Y-%m-%d %H:%M} UTC · "
-            f"λ = {frame['wavelength_um']:.2f} µm · detector {frame['detector']}"
+            f"{frame.get('telescope', 'SPHEREx')} · λ = {frame['wavelength_um']:.2f} µm"
+            + (f" · detector {frame['detector']}" if frame.get("telescope", "SPHEREx") == "SPHEREx" else "")
         )
 
         st.subheader("Difference: what changed between two dates")
@@ -115,7 +139,7 @@ if frames is not None:
         )
         options = average_by_visit(frames) if compare.startswith("Visits") else frames
         labels = [
-            f"{f['date']:%Y-%m-%d} · {f['wavelength_um']:.2f} µm"
+            f"{f.get('telescope', 'SPHEREx')} {f['date']:%Y-%m-%d} · {f['wavelength_um']:.2f} µm"
             + (f" · {f['n_frames']} frames" if "n_frames" in f else "")
             for f in options
         ]
@@ -135,6 +159,9 @@ if frames is not None:
             "blue where it was and orange where it went. Brightness changes can also come from "
             "the different wavelength of each frame, and single dots are usually cosmic rays."
         )
+        if options[a].get("telescope") != options[b].get("telescope"):
+            st.info("You are comparing two telescopes: the star's position is meaningful, "
+                    "but brightness differences are not.")
         if mode == FOLLOW_STAR:
             st.warning("In 'Follow the star' the star is kept centered, so here the background "
                        "stars are what moves. Switch to 'Fixed sky' to see the star's own motion.")

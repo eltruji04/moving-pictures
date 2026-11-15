@@ -29,7 +29,7 @@ def make_blink_gif(frames, zoom=12, ms_per_frame=500):
         draw = ImageDraw.Draw(image)
         _draw_cross(draw, image.width // 2, image.height // 2)
         # ASCII only: the bundled font may not have λ or µ
-        label = f"{frame['date']:%Y-%m-%d}   {frame['wavelength_um']:.2f} um"
+        label = f"{frame.get('telescope', 'SPHEREx')}  {frame['date']:%Y-%m-%d}   {frame['wavelength_um']:.2f} um"
         draw.text((8, 6), label, fill="yellow", font=font)
 
         images.append(image)
@@ -72,6 +72,7 @@ def average_by_visit(frames):
             "date": visit[0]["date"],
             "wavelength_um": float(np.mean([f["wavelength_um"] for f in visit])),
             "detector": visit[0]["detector"],
+            "telescope": visit[0].get("telescope", "SPHEREx"),
             "n_frames": len(visit),
         }
         for visit in visits

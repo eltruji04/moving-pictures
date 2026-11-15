@@ -15,6 +15,11 @@ def demo_name(file_name, track_target):
     return file_name + ("_follow" if track_target else "_fixed")
 
 
+def wise_name(file_name, track_target):
+    """File name (without .npz) of a test object's WISE comparison frame in one view mode."""
+    return demo_name(file_name, track_target) + "_wise"
+
+
 def crop_frames(frames, size_deg):
     """Return copies of the frames cut to the central size_deg x size_deg.
 
@@ -50,7 +55,7 @@ def save_frames(frames, name):
     )
 
 
-def load_frames(name):
+def load_frames(name, telescope="SPHEREx"):
     path = DEMO_DIR / (name + ".npz")
     if not path.exists():
         return []
@@ -63,5 +68,6 @@ def load_frames(name):
             "date": datetime.fromisoformat(str(data["dates"][k])),
             "wavelength_um": float(data["wavelengths"][k]),
             "detector": int(data["detectors"][k]),
+            "telescope": telescope,
         })
     return frames

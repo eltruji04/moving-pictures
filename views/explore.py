@@ -89,7 +89,12 @@ if frames is not None:
         st.warning("No SPHEREx data found for this position")
     else:
         zoom = max(1, DISPLAY_WIDTH_PX // frames[0]["image"].shape[0])
-        gif = make_blink_gif(frames, zoom=zoom)
+        speed = st.select_slider(
+            "Blink speed", options=["Slow", "Medium", "Fast"], value="Medium",
+            help="Use the Frame slider below to pause on a single frame.",
+        )
+        ms_per_frame = {"Slow": 1000, "Medium": 500, "Fast": 200}[speed]
+        gif = make_blink_gif(frames, zoom=zoom, ms_per_frame=ms_per_frame)
         st.image(gif)
         i = st.slider("Frame", 0, len(frames) - 1, 0)
         frame = frames[i]

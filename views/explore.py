@@ -2,12 +2,13 @@ import streamlit as st
 import numpy as np
 from core.spherex import get_frames
 from core.targets import TARGETS, proper_motion_for
-from core.demo import load_frames
+from core.demo import crop_frames, demo_name, load_frames
 from core.animate import make_blink_gif
 from core.coords import parse_coords
 
 
-DISPLAY_ZOOM = 12  # each SPHEREx pixel is shown as a 12x12 block (sharp, no blur)
+DISPLAY_WIDTH_PX = 600  # images are zoomed by a whole number to about this width (sharp, no blur)
+FIELD_SIZES = {"Close (0.1°)": 0.1, "Medium (0.2°)": 0.2, "Far (0.5°)": 0.5}
 
 st.title("Explorador estelar")
 
@@ -22,11 +23,13 @@ if coords is None:
 else:
     ra, dec = coords
     st.caption(f"Read as RA = {ra:.4f}°, Dec = {dec:.4f}°")
-size_deg = st.number_input("Field size (deg)", value=0.05, format="%.3f")
+field = st.radio("Field of view", list(FIELD_SIZES), horizontal=True,
+                 help="Close shows the motion best; Far shows more background stars.")
+size_deg = FIELD_SIZES[field]
 FIXED_SKY = "Fixed sky: watch the star move"
 FOLLOW_STAR = "Follow the star: the background moves"
 mode = st.radio("View", [FIXED_SKY, FOLLOW_STAR], horizontal=True)
-st.caption("The live search uses this mode; search again after changing it.")
+st.caption("Demo objects update at once; for a live search, search again after changing the view.")
 
 
 st.subheader("Try a test object (saved demo data)")
@@ -34,8 +37,8 @@ columns = st.columns(5)
 for column, target in zip(columns, TARGETS):
     with column:
         if st.button(target["label"]):
-            st.session_state["frames"] = load_frames(target["file_name"]) 
-            st.session_state["source"] = "demo: " + target["label"]
+            st.session_state["demo_target"] = target
+            st.session_state["source"] = "demo"
 
 
 if st.button("Search SPHEREx live (~1 min)", disabled=coords is None):
@@ -63,27 +66,36 @@ if st.button("Search SPHEREx live (~1 min)", disabled=coords is None):
     else:
         bar.empty()
         st.session_state["frames"] = frames
+        st.session_state["live_size_deg"] = size_deg
         st.session_state["source"] = "live"
 
 
-if "frames" in st.session_state:
+frames = None
+if st.session_state.get("source") == "demo":
+    # Demo is saved at 0.5° in both views, so the view and field options apply at once
+    target = st.session_state["demo_target"]
+    saved = load_frames(demo_name(target["file_name"], mode == FOLLOW_STAR))
+    frames = crop_frames(saved, size_deg)
+    st.info(f"DEMO MODE: saved SPHEREx data for {target['label']}.")
+elif st.session_state.get("source") == "live" and "frames" in st.session_state:
     frames = st.session_state["frames"]
+    if size_deg <= st.session_state["live_size_deg"]:
+        frames = crop_frames(frames, size_deg)
+    else:
+        st.caption("Search again to download this larger field.")
 
+if frames is not None:
     if len(frames) == 0:
         st.warning("No SPHEREx data found for this position")
     else:
-        if st.session_state["source"].startswith("demo"):
-            st.info(
-                "DEMO MODE: saved data, field size fixed at 0.05°, always in "
-                "'Follow the star' view (the View option only applies to the live search)."
-            )
-        gif = make_blink_gif(frames)
+        zoom = max(1, DISPLAY_WIDTH_PX // frames[0]["image"].shape[0])
+        gif = make_blink_gif(frames, zoom=zoom)
         st.image(gif)
         i = st.slider("Frame", 0, len(frames) - 1, 0)
         frame = frames[i]
 
         image = np.flipud(frame["image"])  # row 0 is drawn at the top; flip so north is up
-        image = np.repeat(np.repeat(image, DISPLAY_ZOOM, axis=0), DISPLAY_ZOOM, axis=1)
+        image = np.repeat(np.repeat(image, zoom, axis=0), zoom, axis=1)
         st.image(image, clamp=True)
         st.caption(
             f"{frame['date']:%Y-%m-%d %H:%M} UTC · "

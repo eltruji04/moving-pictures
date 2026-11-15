@@ -21,9 +21,11 @@ PIXEL_SCALE_ARCSEC = 6.15
 MWIR_MIN_WAVELENGTH_M = 3e-6  # em_min above this = MWIR detectors (4-6)
 DOWNLOAD_RETRIES = 3
 MIN_COVERAGE = 0.9  # drop frames whose cutout covers less than 90% of the grid
-ASINH_SOFTENING = 0.002  # smaller = more boost for faint pixels (0.002 chosen visually on Barnard)
+ASINH_SOFTENING_SIGMA = 2.0  # asinh turns from linear to log this many noise sigmas above black
 DOWNLOAD_WORKERS = 4  # cutouts downloaded at the same time (more may trigger IRSA 502/503)
-FIXED_EPOCH = Time("2026-01-01")  # middle of the SPHEREx data; fixed-sky frames center here
+SKY_FLOOR_SIGMA = 1.0  # black = sky level minus this many noise sigmas
+MIN_WHITE_SIGMA = 20.0  # white is at least this many noise sigmas above the sky
+FIXED_EPOCH =Time("2026-01-01")  # middle of the SPHEREx data; fixed-sky frames center here
 
 warnings.simplefilter("ignore")  # SPHEREx headers trigger harmless SIP/WCS warnings
 log.setLevel("ERROR")
@@ -193,12 +195,19 @@ def _apply_common_scale(frames):
         return
     # Each frame has its own sky level (different wavelength, zodiacal light), so subtract
     # each frame's median first; then the background sits at 0 in every frame
+    noise_levels = []
     for frame in frames:
         frame["image"] = frame["image"] - np.nanmedian(frame["image"])
+        # Robust noise (MAD): bright stars barely affect it
+        noise_levels.append(1.4826 * np.nanmedian(np.abs(frame["image"])))
+    noise = np.median(noise_levels)
     all_pixels = np.concatenate([f["image"].ravel() for f in frames])
-    low = 0.0
-    high = np.nanpercentile(all_pixels, 99.5)
-    stretch = AsinhStretch(a=ASINH_SOFTENING)
+    # A bit below the sky level, so the sky is dark grey with texture instead of half black
+    low = -SKY_FLOOR_SIGMA * noise
+    # In faint fields the 99.5th percentile is just noise; never let noise reach white
+    high = max(np.nanpercentile(all_pixels, 99.5), MIN_WHITE_SIGMA * noise)
+    # Softening tied to the noise, so the sky looks similar (dark grey) in faint and bright fields
+    stretch = AsinhStretch(a=ASINH_SOFTENING_SIGMA * noise / (high - low))
     for frame in frames:
         scaled = np.clip((frame["image"] - low) / (high - low), 0, 1)
         frame["image"] = np.nan_to_num(stretch(scaled), nan=0.0)

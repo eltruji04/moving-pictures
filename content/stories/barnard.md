@@ -1,9 +1,9 @@
 # **BARNARD'S STAR**
 ### *The Fast-Moving Neighbor*
 
-### **Type:** Red dwarf (M4V)
-### **Distance:** ~5.96 light-years
-### **Visual magnitude:** +9.51
+- **Type:** Red dwarf (M4V)
+- **Distance:** ~5.96 light-years
+- **Visual magnitude:** +9.51
 
 For a long time, stars appeared fixed in the sky until astronomer Edward Emerson Barnard discovered in 1916 that Barnard's Star was noticeably shifting position. Its movement is detectable because the star is unusually close to Earth, making it one of the stars with the highest known proper motion.
 

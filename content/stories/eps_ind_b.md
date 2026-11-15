@@ -1,9 +1,9 @@
 # **EPSILON INDI B**
 ### *The Invisible Companion*
 
-### **Type:** Binary brown dwarf system (T1V + T6V)
-### **Distance:** ~12.05 light-years
-### **Visual magnitude:** +24.12
+- **Type:** Binary brown dwarf system (T1V + T6V)
+- **Distance:** ~12.05 light-years
+- **Visual magnitude:** +24.12
 
 At first glance, astronomers thought they had found a single failed star orbiting near a bright neighbor. However, a closer look in 2003 revealed a hidden surprise. That faint point of light was actually two brown dwarfs dancing around each other. Together, they form the closest binary system of failed stars ever discovered near Earth.
 

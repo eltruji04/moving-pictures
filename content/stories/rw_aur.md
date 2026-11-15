@@ -1,9 +1,9 @@
 # **RW AURIGAE**
 ### *The Unstable Young Star*
 
-### **Type:** Young multiple stellar system; classical T Tauri star
-### **Distance:** ~185 parsecs (≈603 light-years)
-### **Visual magnitude:** Variable, approximately +9.2 to +13.6
+- **Type:** Young multiple stellar system; classical T Tauri star
+- **Distance:** ~185 parsecs (≈603 light-years)
+- **Visual magnitude:** Variable, approximately +9.2 to +13.6
 
 Young stars are often restless, but few behave as dramatically as RW Aurigae. It shone steadily for decades until it suddenly began suffering mysterious blackouts lasting for months. Astronomers discovered that massive clouds of dust and debris from its own planetary disk pass right in front of it, blocking its light like a cosmic curtain.
 

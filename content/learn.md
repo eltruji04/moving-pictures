@@ -1,5 +1,5 @@
 # **Learn**
-## **SPHERE X**
+## **SPHEREx**
 ### ***What is SPHEREx?***
 SPHEREx (Spectro-Photometer for the History of the Universe, Epoch of Reionization and Ices Explorer) is a NASA space telescope designed to study the universe using infrared light. Its main goal is to observe the entire sky and collect information about millions of galaxies, stars, and other astronomical objects, helping scientists investigate everything from the origin and evolution of the universe to the formation of stars and planets. It works by detecting infrared radiation across 102 spectral channels, covering a wavelength range of approximately 0.75 to 5 micrometers. By separating light into these channels, SPHEREx can gather information about the composition, properties, and distribution of celestial objects, creating a spectral map of the sky that allows scientists to study the universe in much greater detail.
 

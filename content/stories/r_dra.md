@@ -1,9 +1,9 @@
 # **R DRACONIS**
 ### *The Pulsating Giant*
 
-### **Type:** Mira-type variable red giant (M4.5–M6)
-### **Distance:** ~2,600 light-years
-### **Visual magnitude:** Variable, approximately +6.9 to +13.0
+- **Type:** Mira-type variable red giant (M4.5–M6)
+- **Distance:** ~2,600 light-years
+- **Visual magnitude:** Variable, approximately +6.9 to +13.0
 
 Deep in the constellation Draco lives an aging star that seems to have a heartbeat of its own. Unlike our Sun, whose brightness stays nearly constant, R Draconis expands and contracts rhythmically every eight months. With each cosmic beat, its size and temperature shift dramatically, making it shine hundreds of times brighter at its peak than at its dimmest point.
 

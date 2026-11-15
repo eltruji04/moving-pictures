@@ -21,7 +21,8 @@ def select_demo(target):
 
 
 with st.container(border=True):
-    st.markdown("**1 · Try a test object** (saved demo data, instant)")
+    st.markdown("#### 1 · Choose a target")
+    st.caption("Demo objects: saved data, instant.")
     for column, target in zip(st.columns(len(TARGETS)), TARGETS):
         is_selected = (st.session_state.get("source") == "demo"
                        and st.session_state["demo_target"]["file_name"] == target["file_name"])
@@ -29,40 +30,39 @@ with st.container(border=True):
             st.button(target["label"], width="stretch", on_click=select_demo, args=(target,),
                       type="primary" if is_selected else "secondary")
 
-choose_col, options_col = st.columns([3, 2], gap="large")
-
-with choose_col:
-    with st.container(border=True):
-        st.markdown("**…or type any sky position** (live search)")
-        coords_text = st.text_input(
-            "Coordinates (RA Dec)",
-            value="269.452 4.693",
-            help="Decimal degrees (269.452 4.693) or sexagesimal (17:57:48.5 +04:41:36)",
-        )
+    with st.expander("**…or type any sky position** (live search, ~1 min)", expanded=True):
+        input_col, _ = st.columns([3, 2])
+        with input_col:
+            coords_text = st.text_input("Coordinates (RA Dec)", value="269.452 4.693")
+        st.caption("Decimal degrees (269.452 4.693) or sexagesimal (17:57:48.5 +04:41:36)")
         coords = parse_coords(coords_text)
         if coords is None:
             st.error("Can't read those coordinates. Try 269.452 4.693 or 17:57:48.5 +04:41:36")
         else:
             ra, dec = coords
             st.caption(f"Read as RA = {ra:.4f}°, Dec = {dec:.4f}°")
-        search_clicked = st.button("Search SPHEREx live (~1 min)", type="primary",
+        search_clicked = st.button("Search SPHEREx live (~1 min)", icon="🛰️", type="primary",
                                    disabled=coords is None)
+        st.caption("After changing the view or field, search again to update a live result.")
 
-with options_col:
-    with st.container(border=True):
-        st.markdown("**2 · How to look at it**")
+with st.container(border=True):
+    st.markdown("#### 2 · How to look at it")
+    field_col, view_col, wise_col = st.columns([3, 3, 4], gap="large")
+    with field_col:
         field = st.radio("Field of view", list(FIELD_SIZES), horizontal=True,
                          help="Close shows the motion best; Far shows more background stars.")
         size_deg = FIELD_SIZES[field]
+    with view_col:
         FIXED_SKY = "Fixed sky: watch the star move"
         FOLLOW_STAR = "Follow the star: the background moves"
         mode = st.radio("View", [FIXED_SKY, FOLLOW_STAR])
+    with wise_col:
         include_wise = st.checkbox(
             "Add an older image from WISE (2010)",
-            help="WISE is another infrared telescope. 15 years apart, a fast star's motion is easy "
-                 "to see. Its brightness is scaled on its own and can't be compared with SPHEREx.",
+            help="WISE is another infrared telescope. Its brightness is scaled on its own "
+                 "and can't be compared with SPHEREx.",
         )
-        st.caption("Demo objects update at once; for a live search, search again after changing the view.")
+        st.caption("15 years earlier: makes slow motion easier to see.")
 
 
 if search_clicked:
@@ -111,7 +111,13 @@ if st.session_state.get("source") == "demo":
     if include_wise and frames:
         wise = load_frames(wise_name(target["file_name"], mode == FOLLOW_STAR), telescope="WISE")
         frames = crop_frames(wise, size_deg) + frames
-    st.info(f"**DEMO MODE:** saved data for {target['label']}.", icon="💾")
+    span = ""
+    if frames:
+        first = min(f["date"] for f in frames)
+        last = max(f["date"] for f in frames)
+        span = f" ({len(frames)} frames, {first:%b %Y} – {last:%b %Y})"
+    st.info(f"**DEMO MODE** · Showing saved data for **{target['label']}**{span}. "
+            "Nothing is downloaded.", icon="💾")
 elif st.session_state.get("source") == "live" and "frames" in st.session_state:
     frames = st.session_state["frames"]
     if include_wise and frames:
@@ -133,13 +139,13 @@ if frames is not None:
         st.subheader("3 · Watch the blink")
         blink_col, frame_col = st.columns(2, gap="large")
         with blink_col:
-            speed = st.select_slider(
-                "Blink speed", options=["Slow", "Medium", "Fast"], value="Medium",
+            gif_slot = st.empty()  # the GIF goes above the speed control, but needs its value
+            speed = st.segmented_control(
+                "Blink speed", ["Slow", "Medium", "Fast"], default="Medium", required=True,
                 help="Use the Frame slider on the right to pause on a single frame.",
             )
-            ms_per_frame = {"Slow": 1000, "Medium": 500, "Fast": 200}[speed]
-            gif = make_blink_gif(frames, zoom=zoom, ms_per_frame=ms_per_frame)
-            st.image(gif)
+            ms_per_frame = {"Slow": 1000, "Medium": 500, "Fast": 200}[speed or "Medium"]
+            gif_slot.image(make_blink_gif(frames, zoom=zoom, ms_per_frame=ms_per_frame))
             st.caption("The cross marks the target. Every frame shows its date and wavelength.")
         with frame_col:
             i = st.slider("Frame", 0, len(frames) - 1, 0)
@@ -198,8 +204,8 @@ if frames is not None:
                 "**:blue[blue]** where it was and **:orange[orange]** where it went."
             )
             st.caption(
-                "Brightness changes can also come from the different wavelength of each frame, "
-                "and single dots are usually cosmic rays."
+                "Isolated single-pixel spots are usually cosmic rays. Small brightness differences "
+                "can come from wavelength, not real change."
             )
             if options[a].get("telescope") != options[b].get("telescope"):
                 st.info("You are comparing two telescopes: the star's position is meaningful, "
@@ -209,3 +215,5 @@ if frames is not None:
                            "stars are what moves. Switch to 'Fixed sky' to see the star's own motion.")
         with diff_col:
             st.image(make_difference_image(options[a], options[b], zoom=zoom))
+            st.caption("🟦 **:blue[blue]** = where it was · 🟧 **:orange[orange]** = where it is now · "
+                       "black = no change")

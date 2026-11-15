@@ -6,25 +6,30 @@ SPHEREx (Spectro-Photometer for the History of the Universe, Epoch of Reionizati
 ## **VISUAL MAGNITUDE**
 ### ***What is visual magnitude?***
 Visual magnitude is a measurement that indicates how bright a celestial body appears as perceived by the human eye from Earth.
+
 Its scale is logarithmic and has no fixed limit; however, in practice it usually ranges between -26.7 and +31.5, using references such as the Sun (-26.7), the full Moon (-12.7), and the approximate limit of the naked human eye under dark skies (+6.5).
+
 *For example:*
-•	Barnard’s Star: +9.51
-•	RW Aurigae: Variable between +10.5 and +13.0
-•	R Draconis: Variable between +6.7 and +13.2
+
+- Barnard’s Star: +9.51
+- RW Aurigae: Variable between +10.5 and +13.0
+- R Draconis: Variable between +6.7 and +13.2
 
 ### ***But what happens if a body does not emit visible light?***
 When a celestial body does not emit or transmit visible light (such as ultra-cool dwarfs), astronomers switch to other bands of the electromagnetic spectrum or use different indirect methods to measure its brightness and detect it. These methods are divided into 3 main branches:
-Observation in other wavelengths
 
-•	**Infrared:** This is the primary method for cold objects like Epsilon Indi B or WISE 0855−0714. Although they do not shine in visible light, they emit heat (thermal radiation) that telescopes like James Webb or WISE measure using infrared magnitudes (J, H, K, W1, W2 bands, etc.).
-•	**Radio waves and microwaves:** These are used to detect cold gas, pulsars, supermassive black holes, or supernova remnants using radio telescopes.
-•	**X-rays and gamma rays:** These allow astronomers to study extremely energetic or hot phenomena, such as accretion disks around black holes or neutron stars.
-Use of specific photometric systems
-•	**Filters outside the visual range:** Instead of visual magnitude (V), brightness is reported using the name of the corresponding filter.
-•	**Energy flux (Janskys or ergs):** In radio astronomy or far-infrared studies, the magnitude scale is often set aside to directly measure the received flux density.
-Indirect detection methods
-•	**Gravitational effect:** If an object is completely dark (such as an isolated black hole or a planet), it is detected by how its gravity tugs on a nearby star (radial velocity) or bends the light of more distant stars (gravitational microlensing).
-•	**Transits:** If a dark body passes in front of a bright star, astronomers measure the slight, temporary dip in that star's visual magnitude.
+### **Observation in other wavelengths**
+- **Infrared:** This is the primary method for cold objects like Epsilon Indi B or WISE 0855−0714. Although they do not shine in visible light, they emit heat (thermal radiation) that telescopes like James Webb or WISE measure using infrared magnitudes (J, H, K, W1, W2 bands, etc.).
+- **Radio waves and microwaves:** These are used to detect cold gas, pulsars, supermassive black holes, or supernova remnants using radio telescopes.
+- **X-rays and gamma rays:** These allow astronomers to study extremely energetic or hot phenomena, such as accretion disks around black holes or neutron stars.
+
+### **Use of specific photometric systems**
+- **Filters outside the visual range:** Instead of visual magnitude (V), brightness is reported using the name of the corresponding filter.
+- **Energy flux (Janskys or ergs):** In radio astronomy or far-infrared studies, the magnitude scale is often set aside to directly measure the received flux density.
+
+### **Indirect detection methods**
+- **Gravitational effect:** If an object is completely dark (such as an isolated black hole or a planet), it is detected by how its gravity tugs on a nearby star (radial velocity) or bends the light of more distant stars (gravitational microlensing).
+- **Transits:** If a dark body passes in front of a bright star, astronomers measure the slight, temporary dip in that star's visual magnitude.
 
 ## **INFRARED**
 ### ***Why use infrared?***

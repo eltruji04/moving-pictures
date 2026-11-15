@@ -6,6 +6,7 @@
 [![Streamlit](https://img.shields.io/badge/streamlit-1.67-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
 [![Astropy](https://img.shields.io/badge/astropy-8.0-orange)](https://www.astropy.org/)
 [![Data: SPHEREx / IRSA](https://img.shields.io/badge/data-SPHEREx%20%2F%20IRSA-blueviolet)](https://irsa.ipac.caltech.edu/)
+[![Data: WISE / IRSA](https://img.shields.io/badge/data-WISE%20%2F%20IRSA-blueviolet)](https://irsa.ipac.caltech.edu/Missions/wise.html)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 **Blink SPHEREx infrared images through time to spot stars that move or change.**
@@ -47,11 +48,15 @@ at, not just show it.
  2. Select    up to 12 images spread evenly across the observation dates
         │
         ▼
- 3. Cutout    download only a small cutout of each image (full images are ~62 MB each)
+ 3. Cutout    download only a cutout of each image (full images are ~62 MB each),
+              4 at a time in parallel
         │
         ▼
- 4. Align     move the target position to each image's date (proper motion), then reproject
-              every cutout onto the same north-up grid; drop cutouts covering less than 90%
+ 4. Align     reproject every cutout onto the same north-up grid; drop cutouts covering
+              less than 90%. Two views:
+              · Fixed sky: every frame centered on the same point, so the star moves
+              · Follow the star: each frame centered on the star at that date
+                (proper motion applied), so the background moves
         │
         ▼
  5. Measure   read the observation date (DATE-OBS), the detector, and the wavelength
@@ -59,10 +64,19 @@ at, not just show it.
         │
         ▼
  6. Scale     subtract each frame's sky background, then apply ONE common asinh brightness
-              scale to all frames, so brightness changes are real, not display artifacts
+              scale to all frames (black just below the sky, white set by the stars or by
+              the noise level), so brightness changes are real, not display artifacts
         │
         ▼
  7. Blink     animated GIF with a cross on the target and the date + wavelength on each frame
+        │
+        ▼
+ 8. Compare   difference image between two visits (frames of each visit averaged):
+              blue where something was, orange where it went
+        │
+        ▼
+ 9. Optional  one older image from WISE (AllWISE W2, 4.6 µm, 2010) on the same grid,
+              with its own brightness scale, to compare positions 15 years apart
 ```
 
 Two steps deserve a note:
@@ -97,10 +111,16 @@ The first three are tested for **motion**; the last two for **variability**.
 - **Coordinate input** in decimal degrees (`269.452 4.693`) or sexagesimal
   (`17:57:48.5 +04:41:36`, `17h57m48.5s +04d41m36s`, `17 57 48.5 +04 41 36`).
 - **Five one-click test objects**, loaded from saved data and clearly labeled **DEMO MODE**.
-- **Live search** of the SPHEREx archive at IRSA for any position (takes ~3 minutes).
-- **Adjustable field size** for live searches.
-- **Blink GIF** with a fixed cross on the target and date and wavelength on every frame.
+- **Live search** of the SPHEREx archive at IRSA for any position (about 1 minute, with a progress
+  bar and a clear message when IRSA is not responding).
+- **Two views:** *Fixed sky* (watch the star move) and *Follow the star* (the background moves).
+- **Field of view:** Close (0.1°), Medium (0.2°) or Far (0.5°).
+- **Blink GIF** with a fixed cross on the target, date and wavelength on every frame, and
+  adjustable speed.
 - **Frame-by-frame slider**, shown with sharp, unsmoothed pixels, with date, wavelength and detector.
+- **Difference image** between two dates (averaged visits or single frames) to make small motions visible.
+- **Optional WISE (2010) image**: with 15 years between images, Barnard's Star moves about
+  25 SPHEREx pixels instead of 1.
 - **Multipage app:** Home, Explore, Stories, Learn, About.
 
 ---
@@ -139,8 +159,10 @@ The app opens at http://localhost:8501.
 
 ### Rebuilding the demo data
 
-The demo data for the five test objects lives in `data/demo/*.npz`. To regenerate it from IRSA
-(slow; needs a good connection):
+The demo data for the five test objects lives in `data/demo/*.npz`: SPHEREx frames at 0.5° in
+both views (`<object>_fixed.npz`, `<object>_follow.npz`) plus one WISE frame each
+(`<object>_<view>_wise.npz`). Smaller fields are cut from the center. Files that already exist are
+skipped, so delete them to regenerate. To rebuild from IRSA (slow; needs a good connection):
 
 ```bash
 python -m scripts.build_demo
@@ -156,11 +178,12 @@ python -m scripts.build_demo
 ├── views/              # One file per page: home, explore, stories, learn, about
 ├── core/               # Data side; knows nothing about the web interface
 │   ├── spherex.py      # Search, cutouts, alignment, wavelength, common brightness scale
+│   ├── wise.py         # One older WISE (2010) comparison frame on the same grid
 │   ├── frames.py       # Fake get_frames (random noise) used while developing the UI
 │   ├── coords.py       # Parse RA/Dec in decimal or sexagesimal
 │   ├── targets.py      # The five test objects (SIMBAD positions and proper motions)
-│   ├── animate.py      # Blink GIF with target cross and date/wavelength label
-│   ├── demo.py         # Save/load processed frames for demo mode
+│   ├── animate.py      # Blink GIF, visit averaging and difference image
+│   ├── demo.py         # Save/load/crop processed frames for demo mode
 │   └── content.py      # Read page texts from content/
 ├── content/            # Markdown texts for pages and stories
 ├── data/demo/          # Saved frames for the five test objects
@@ -172,10 +195,11 @@ python -m scripts.build_demo
 The data side and the interface meet at a single function:
 
 ```python
-get_frames(ra_deg, dec_deg, size_deg) -> list[dict]
+get_frames(ra_deg, dec_deg, size_deg, pm_ra_mas_yr=0, pm_dec_mas_yr=0, n_frames=12,
+           on_progress=None, track_target=False) -> list[dict]
 # each dict: {"image": 2D array (same shape for all), "date": datetime,
-#             "wavelength_um": float, "detector": int}
-# returns [] if no data is found
+#             "wavelength_um": float, "detector": int}  (+ "telescope" for WISE/demo frames)
+# returns [] if no data is found; raises if IRSA can't be reached after retries
 ```
 
 ---
@@ -187,7 +211,8 @@ We want to be upfront about what this tool can and can't show.
 - **The time span is short.** The `spherex_dr1` data we use covers only about 8–9 months
   (August 2025 to May 2026). Even Barnard's Star, the fastest-moving star in the sky, shifts by only
   about **1.2 pixels** in that time (a SPHEREx pixel is ~6.15″). The motion is real but subtle; don't
-  expect a star racing across the frame.
+  expect a star racing across the frame. The difference image and the optional WISE (2010) image
+  are there to make it visible.
 - **Every frame is at a different wavelength.** SPHEREx is a spectral survey: each image sees a
   slightly different infrared color, and the two detector groups cover roughly 0.75–2.4 µm and
   2.4–5 µm (approximate). A brightness change between frames **can be a color effect, not real
@@ -200,11 +225,20 @@ We want to be upfront about what this tool can and can't show.
 - **Saturated stars.** The cores of very bright stars (like R Draconis) are saturated in SPHEREx.
   We fill those empty pixels from their neighbors, so the core looks bright, but its brightness
   there is not a real measurement.
-- **Live search does not correct for proper motion.** The five demo objects are corrected using
-  SIMBAD data; for an arbitrary position typed by the user, the app assumes the object is fixed.
-- **Live search is slow and fragile.** It takes about 3 minutes, and IRSA often answers with
-  temporary errors (502/503). The app retries, but a search can still fail; the demo mode exists for
-  that reason.
+- **Proper motion is only known for the five test objects.** If the typed coordinates are within
+  1′ of one of them, the app uses its SIMBAD proper motion; for any other position it assumes the
+  object is fixed.
+- **Saturated centers cancel in the difference image.** A very bright star is saturated in both
+  frames, so its core turns black and the motion shows only around its edges.
+- **Averaging a visit mixes wavelengths.** The "Visits (averaged)" comparison lowers noise but
+  combines frames taken at slightly different wavelengths.
+- **WISE is a different telescope.** Its resolution and sensitivity differ from SPHEREx, so its
+  brightness is scaled on its own: compare positions, not brightness. The AllWISE image stacks
+  exposures taken over several months of 2010, and near the edge of an AllWISE tile part of a large
+  field can be missing (shown black).
+- **Live search depends on IRSA.** It takes about 1 minute (about 30 s more with WISE), and IRSA
+  often answers with temporary errors (502/503). The app retries and then says IRSA is not
+  responding; the demo mode exists for that reason.
 - **It's a hackathon project.** Built in one weekend; no automated tests. Not a scientific tool.
 
 ---
@@ -213,6 +247,9 @@ We want to be upfront about what this tool can and can't show.
 
 - **SPHEREx** images: NASA/JPL-Caltech, served by
   [IRSA](https://irsa.ipac.caltech.edu/) (NASA/IPAC Infrared Science Archive), collection `spherex_dr1`.
+- **WISE** images: AllWISE Atlas, band W2, served by IRSA (collection `wise_allwise`). WISE is a
+  joint project of the University of California, Los Angeles, and the Jet Propulsion
+  Laboratory/California Institute of Technology, funded by NASA.
 - **Positions and proper motions:** [SIMBAD](https://simbad.cfa.harvard.edu/simbad/) (CDS, Strasbourg), queried via its Harvard mirror.
 - **Software:** [Astropy](https://www.astropy.org/), [astroquery](https://astroquery.readthedocs.io/),
   [reproject](https://reproject.readthedocs.io/), [NumPy](https://numpy.org/),

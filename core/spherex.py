@@ -23,16 +23,20 @@ DOWNLOAD_RETRIES = 3
 MIN_COVERAGE = 0.9  # drop frames whose cutout covers less than 90% of the grid
 ASINH_SOFTENING = 0.002  # smaller = more boost for faint pixels (0.002 chosen visually on Barnard)
 DOWNLOAD_WORKERS = 4  # cutouts downloaded at the same time (more may trigger IRSA 502/503)
+FIXED_EPOCH = Time("2026-01-01")  # middle of the SPHEREx data; fixed-sky frames center here
 
 warnings.simplefilter("ignore")  # SPHEREx headers trigger harmless SIP/WCS warnings
 log.setLevel("ERROR")
 
 
-def get_frames(ra_deg, dec_deg, size_deg, pm_ra_mas_yr=0.0, pm_dec_mas_yr=0.0, n_frames=12, on_progress=None):
+def get_frames(ra_deg, dec_deg, size_deg, pm_ra_mas_yr=0.0, pm_dec_mas_yr=0.0, n_frames=12, on_progress=None,
+               track_target=False):
     """Return aligned SPHEREx frames around a position.
 
     ra_deg, dec_deg: J2000 coordinates. pm_*: proper motion in mas/yr (0 for fixed targets).
     on_progress: optional function called as on_progress(done, total) after each cutout.
+    track_target: False = every frame centered on the same sky point (the star moves);
+                  True = each frame centered on the star at that date (the background moves).
     Raises the last error if the IRSA search fails after all retries.
     Returns [] if nothing is found.
     """
@@ -49,6 +53,7 @@ def get_frames(ra_deg, dec_deg, size_deg, pm_ra_mas_yr=0.0, pm_dec_mas_yr=0.0, n
         return []
 
     side_px = _side_in_pixels(size_deg)
+    grid_center = None if track_target else target.apply_space_motion(new_obstime=FIXED_EPOCH)
     selected_rows = _spread_in_time(rows, n_frames)
     total = len(selected_rows)
     finished = 0
@@ -56,7 +61,8 @@ def get_frames(ra_deg, dec_deg, size_deg, pm_ra_mas_yr=0.0, pm_dec_mas_yr=0.0, n
 
     with ThreadPoolExecutor(max_workers=DOWNLOAD_WORKERS) as executor:
         futures = [
-            executor.submit(_build_frame, row, target, size_deg, side_px) for row in selected_rows
+            executor.submit(_build_frame, row, target, size_deg, side_px, grid_center)
+            for row in selected_rows
         ]
         # as_completed yields in the main thread, so on_progress can safely update the UI
         for future in as_completed(futures):
@@ -94,7 +100,7 @@ def _fill_holes(frames):
 
 def _query_images(target):
     # Search near the target's position around the middle of the mission
-    position_now = target.apply_space_motion(new_obstime=Time("2026-01-01"))
+    position_now = target.apply_space_motion(new_obstime=FIXED_EPOCH)
 
 
     for attempt in range(DOWNLOAD_RETRIES):
@@ -141,13 +147,15 @@ def _download(url):
     return None
 
 
-def _build_frame(row, target, size_deg, side_px):
+def _build_frame(row, target, size_deg, side_px, grid_center=None):
+    """grid_center: sky point at the image center, or None to center on the star at this date."""
     obs_time = Time(row["t_min"], format="mjd")
-    position = target.apply_space_motion(new_obstime=obs_time)
+    star = target.apply_space_motion(new_obstime=obs_time)  # real star position, used for λ
+    center = star if grid_center is None else grid_center
 
     # Download a bit more than needed so rotated cutouts still cover the grid corners
     cutout_size = size_deg * 1.5
-    url = f"{row['access_url']}?center={position.ra.deg},{position.dec.deg}&size={cutout_size}"
+    url = f"{row['access_url']}?center={center.ra.deg},{center.dec.deg}&size={cutout_size}"
     path = _download(url)
     if path is None:
         return None
@@ -156,9 +164,9 @@ def _build_frame(row, target, size_deg, side_px):
         header = hdul["IMAGE"].header
         source_wcs = WCS(header)
         image, footprint = reproject_interp(
-            (hdul["IMAGE"].data, source_wcs), _target_grid(position, side_px), shape_out=(side_px, side_px)
+            (hdul["IMAGE"].data, source_wcs), _target_grid(center, side_px), shape_out=(side_px, side_px)
         )
-        x, y = source_wcs.world_to_pixel(position)
+        x, y = source_wcs.world_to_pixel(star)
         wavelength_wcs = WCS(header, fobj=hdul, key="W")
         wavelength_um, _bandwidth = wavelength_wcs.pixel_to_world_values(x, y)
         date = Time(header["DATE-OBS"], scale="utc").to_datetime()

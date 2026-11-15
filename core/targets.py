@@ -1,5 +1,7 @@
 """The 5 required test objects. Positions (J2000) and proper motions (mas/yr) from SIMBAD,
 queried 2026-11-14 via the Harvard mirror."""
+import astropy.units as u
+from astropy.coordinates import SkyCoord
 
 TARGETS = [
     {
@@ -43,3 +45,16 @@ TARGETS = [
         "pm_dec": 6.149,
     },
 ]
+
+
+MATCH_RADIUS_ARCMIN = 1.0  # typed coordinates this close to a test object use its proper motion
+
+
+def proper_motion_for(ra_deg, dec_deg):
+    """Return (pm_ra, pm_dec) in mas/yr of the test object at these J2000 coordinates, or (0, 0)."""
+    typed = SkyCoord(ra=ra_deg * u.deg, dec=dec_deg * u.deg)
+    for target in TARGETS:
+        known = SkyCoord(ra=target["ra"] * u.deg, dec=target["dec"] * u.deg)
+        if typed.separation(known) < MATCH_RADIUS_ARCMIN * u.arcmin:
+            return target["pm_ra"], target["pm_dec"]
+    return 0.0, 0.0

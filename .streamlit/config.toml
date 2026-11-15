@@ -1,0 +1,7 @@
+[theme]
+# Night-sky look; orange matches the "where it is now" color of the difference image
+base = "dark"
+primaryColor = "#FF8C1A"
+backgroundColor = "#0B0F1A"
+secondaryBackgroundColor = "#161C2C"
+textColor = "#E6E9F0"

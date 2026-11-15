@@ -8,14 +8,19 @@ STORY_FIELD_DEG = 0.1  # close field: shows the motion best
 STORY_WIDTH_PX = 600
 
 st.title("Stories")
+st.caption("Five objects, five reasons to look twice. Three stars that move, two that change brightness.")
 
 tabs = st.tabs([target["label"] for target in TARGETS])
 for tab, target in zip(tabs, TARGETS):
     with tab:
-        st.markdown(read_markdown("stories/" + target["file_name"] + ".md"))
-        saved = load_frames(demo_name(target["file_name"], track_target=False))
-        frames = crop_frames(saved, STORY_FIELD_DEG)
-        if len(frames) > 0:
-            zoom = max(1, STORY_WIDTH_PX // frames[0]["image"].shape[0])
-            st.image(make_blink_gif(frames, zoom=zoom))
-            st.caption(f"SPHEREx data, {len(frames)} frames")
+        text_col, gif_col = st.columns([3, 2], gap="large")
+        with text_col:
+            st.markdown(read_markdown("stories/" + target["file_name"] + ".md"))
+            st.page_link("views/explore.py", label="Explore it yourself", icon="🔭")
+        with gif_col:
+            saved = load_frames(demo_name(target["file_name"], track_target=False))
+            frames = crop_frames(saved, STORY_FIELD_DEG)
+            if len(frames) > 0:
+                zoom = max(1, STORY_WIDTH_PX // frames[0]["image"].shape[0])
+                st.image(make_blink_gif(frames, zoom=zoom))
+                st.caption(f"SPHEREx data, {len(frames)} frames · fixed sky, {STORY_FIELD_DEG}° field")

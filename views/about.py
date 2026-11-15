@@ -21,7 +21,7 @@ st.header("Data sources")
 with st.container(border=True):
     st.markdown(
         "- **SPHEREx** — NASA/JPL-Caltech, served by [IRSA](https://irsa.ipac.caltech.edu/). "
-        "Infrared cutouts, Aug 2025 – May 2026 (collection `spherex_dr1`).\n"
+        "Infrared cutouts, Apr 2025 – May 2026 (collection `spherex_dr1`).\n"
         "- **WISE / AllWISE** — NASA, served by IRSA. The optional 2010 comparison image (band W2).\n"
         "- **SIMBAD** — CDS, Strasbourg. Positions and proper motions of the demo objects.\n"
         "- **Software** — Astropy, astroquery, reproject, NumPy, SciPy, Pillow and Streamlit."

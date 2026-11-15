@@ -5,7 +5,7 @@
 - **Distance:** ~12.05 light-years
 - **Visual magnitude:** +24.12
 
-At first glance, astronomers thought they had found a single failed star orbiting near a bright neighbor. However, a closer look in 2003 revealed a hidden surprise. That faint point of light was actually two brown dwarfs dancing around each other. Together, they form the closest binary system of failed stars ever discovered near Earth.
+At first glance, astronomers thought they had found a single failed star orbiting near a bright neighbor. However, a closer look in 2003 revealed a hidden surprise. That faint point of light was actually two brown dwarfs dancing around each other. Together, they form one of the closest pairs of failed stars to Earth; only the Luhman 16 pair, found in 2013, is known to be closer.
 
 Epsilon Indi B is a system composed of two brown dwarfs, known as Epsilon Indi Ba and Epsilon Indi Bb, which orbit around a common center of mass. These objects occupy an interesting middle ground between giant planets and stars: they are more massive than most planets but lack the conditions required to sustain ordinary hydrogen fusion like stars do.
 

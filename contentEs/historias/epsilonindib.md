@@ -5,7 +5,7 @@
 - **Distancia:** ~12,05 años luz
 - **Magnitud visual:** +24,12
 
-A primera vista, los astrónomos pensaron que habían encontrado una sola estrella fallida orbitando cerca de una estrella brillante. Sin embargo, al observarla más de cerca en 2003, descubrieron una sorpresa oculta. Ese tenue punto de luz en realidad eran dos enanas marrones bailando una alrededor de la otra. Juntas forman el sistema binario de estrellas fallidas más cercano a la Tierra.
+A primera vista, los astrónomos pensaron que habían encontrado una sola estrella fallida orbitando cerca de una estrella brillante. Sin embargo, al observarla más de cerca en 2003, descubrieron una sorpresa oculta. Ese tenue punto de luz en realidad eran dos enanas marrones bailando una alrededor de la otra. Juntas forman uno de los pares de estrellas fallidas más cercanos a la Tierra; solo el par Luhman 16, descubierto en 2013, está más cerca.
 
 Epsilon Indi B es un sistema compuesto por dos enanas marrones, denominadas Epsilon Indi Ba y Epsilon Indi Bb, que orbitan alrededor de un centro de masa común. Estos objetos ocupan una posición intermedia entre los planetas gigantes y las estrellas: poseen más masa que la mayoría de los planetas, pero no suficiente para mantener la fusión de hidrógeno característica de las estrellas.
 

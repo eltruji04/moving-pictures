@@ -223,10 +223,11 @@ get_frames(ra_deg, dec_deg, size_deg, pm_ra_mas_yr=0, pm_dec_mas_yr=0, n_frames=
 
 We want to be upfront about what this tool can and can't show.
 
-- **The time span is short.** The `spherex_dr1` data we use covers only about 8–9 months
-  (August 2025 to May 2026). Even Barnard's Star, the fastest-moving star in the sky, shifts by only
-  about **1.2 pixels** in that time (a SPHEREx pixel is ~6.15″). The motion is real but subtle; don't
-  expect a star racing across the frame. The difference image and the optional WISE (2010) image
+- **The time span is short.** The `spherex_dr1` data we use covers at most about a year, and
+  often less: the demo objects have data between April 2025 and May 2026, and Barnard's Star only
+  from August 2025 to May 2026 (about 9 months). Even Barnard's Star, the fastest-moving star in the
+  sky, shifts by only about **1.2 pixels** in that time (a SPHEREx pixel is ~6.15″). The motion is
+  real but subtle; don't expect a star racing across the frame. The difference image and the optional WISE (2010) image
   are there to make it visible.
 - **Every frame is at a different wavelength.** SPHEREx is a spectral survey: each image sees a
   slightly different infrared color, and the two detector groups cover roughly 0.75–2.4 µm and

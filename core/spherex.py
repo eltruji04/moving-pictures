@@ -1,6 +1,7 @@
 """Real get_frames: SPHEREx cutouts from IRSA, aligned on a common north-up grid."""
 import time
 import warnings
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import astropy.units as u
 import numpy as np
@@ -21,15 +22,17 @@ MWIR_MIN_WAVELENGTH_M = 3e-6  # em_min above this = MWIR detectors (4-6)
 DOWNLOAD_RETRIES = 3
 MIN_COVERAGE = 0.9  # drop frames whose cutout covers less than 90% of the grid
 ASINH_SOFTENING = 0.002  # smaller = more boost for faint pixels (0.002 chosen visually on Barnard)
+DOWNLOAD_WORKERS = 4  # cutouts downloaded at the same time (more may trigger IRSA 502/503)
 
 warnings.simplefilter("ignore")  # SPHEREx headers trigger harmless SIP/WCS warnings
 log.setLevel("ERROR")
 
 
-def get_frames(ra_deg, dec_deg, size_deg, pm_ra_mas_yr=0.0, pm_dec_mas_yr=0.0, n_frames=12):
+def get_frames(ra_deg, dec_deg, size_deg, pm_ra_mas_yr=0.0, pm_dec_mas_yr=0.0, n_frames=12, on_progress=None):
     """Return aligned SPHEREx frames around a position.
 
     ra_deg, dec_deg: J2000 coordinates. pm_*: proper motion in mas/yr (0 for fixed targets).
+    on_progress: optional function called as on_progress(done, total) after each cutout.
     Returns [] if nothing is found.
     """
     target = SkyCoord(
@@ -45,11 +48,25 @@ def get_frames(ra_deg, dec_deg, size_deg, pm_ra_mas_yr=0.0, pm_dec_mas_yr=0.0, n
         return []
 
     side_px = _side_in_pixels(size_deg)
+    selected_rows = _spread_in_time(rows, n_frames)
+    total = len(selected_rows)
+    finished = 0
     frames = []
-    for row in _spread_in_time(rows, n_frames):
-        frame = _build_frame(row, target, size_deg, side_px)
-        if frame is not None:
-            frames.append(frame)
+
+    with ThreadPoolExecutor(max_workers=DOWNLOAD_WORKERS) as executor:
+        futures = [
+            executor.submit(_build_frame, row, target, size_deg, side_px) for row in selected_rows
+        ]
+        # as_completed yields in the main thread, so on_progress can safely update the UI
+        for future in as_completed(futures):
+            frame = future.result()
+            if frame is not None:
+                frames.append(frame)
+            finished += 1
+            if on_progress is not None:
+                on_progress(finished, total)
+
+    frames.sort(key=lambda frame: frame["date"])  # downloads finish in any order
 
     _fill_holes(frames)  # must run before scaling, which turns any remaining NaN into 0
     _apply_common_scale(frames)

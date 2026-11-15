@@ -3,7 +3,7 @@ import numpy as np
 from core.spherex import get_frames
 from core.targets import TARGETS, proper_motion_for
 from core.demo import crop_frames, demo_name, load_frames
-from core.animate import make_blink_gif
+from core.animate import average_by_visit, make_blink_gif, make_difference_image
 from core.coords import parse_coords
 
 
@@ -101,3 +101,35 @@ if frames is not None:
             f"{frame['date']:%Y-%m-%d %H:%M} UTC · "
             f"λ = {frame['wavelength_um']:.2f} µm · detector {frame['detector']}"
         )
+
+        st.subheader("Difference: what changed between two dates")
+        compare = st.radio(
+            "Compare", ["Visits (averaged, less noise)", "Two single frames"], horizontal=True,
+            help="Averaging all frames of a visit removes most noise, cosmic rays and satellite "
+                 "trails, but mixes slightly different wavelengths.",
+        )
+        options = average_by_visit(frames) if compare.startswith("Visits") else frames
+        labels = [
+            f"{f['date']:%Y-%m-%d} · {f['wavelength_um']:.2f} µm"
+            + (f" · {f['n_frames']} frames" if "n_frames" in f else "")
+            for f in options
+        ]
+        later_default = len(options) - 1
+        if compare.startswith("Visits") and len(options) > 1:
+            # The later visit with the most frames has the least noise
+            later_default = 1 + int(np.argmax([f["n_frames"] for f in options[1:]]))
+        col_a, col_b = st.columns(2)
+        with col_a:
+            a = st.selectbox("Earlier", range(len(options)), index=0, format_func=lambda k: labels[k])
+        with col_b:
+            b = st.selectbox("Later", range(len(options)), index=later_default,
+                             format_func=lambda k: labels[k])
+        st.image(make_difference_image(options[a], options[b], zoom=zoom))
+        st.caption(
+            "Later minus earlier. What stayed the same turns black. A star that moved leaves "
+            "blue where it was and orange where it went. Brightness changes can also come from "
+            "the different wavelength of each frame, and single dots are usually cosmic rays."
+        )
+        if mode == FOLLOW_STAR:
+            st.warning("In 'Follow the star' the star is kept centered, so here the background "
+                       "stars are what moves. Switch to 'Fixed sky' to see the star's own motion.")

@@ -116,12 +116,24 @@ The first three are tested for **motion**; the last two for **variability**.
 - **Two views:** *Fixed sky* (watch the star move) and *Follow the star* (the background moves).
 - **Field of view:** Close (0.1°), Medium (0.2°) or Far (0.5°).
 - **Blink GIF** with a fixed cross on the target, date and wavelength on every frame, and
-  adjustable speed.
-- **Frame-by-frame slider**, shown with sharp, unsmoothed pixels, with date, wavelength and detector.
-- **Difference image** between two dates (averaged visits or single frames) to make small motions visible.
+  adjustable speed (Slow / Medium / Fast).
+- **Frame-by-frame slider**, shown with sharp, unsmoothed pixels, with date, wavelength and detector,
+  plus a table of all frames (date, telescope, wavelength, detector).
+- **Difference image** between two dates (averaged visits or single frames) to make small motions
+  visible: blue where the star was, orange where it is now.
 - **Optional WISE (2010) image**: with 15 years between images, Barnard's Star moves about
   25 SPHEREx pixels instead of 1.
-- **Multipage app:** Home, Explore, Stories, Learn, About.
+- **English / Spanish switch** (top right) for the Home, Stories and Learn pages.
+
+### Pages
+
+| Page | What you can do |
+|---|---|
+| **Home** | Read what the app does and how a blink works; jump to Explore, Stories or Learn. |
+| **Explore** | The tool: pick a test object or type coordinates, choose the view and field, watch the blink, compare two dates. |
+| **Stories** | One short story per test object (type, distance, magnitude, a "Did you know?" fact) next to its blink. "Explore it yourself" opens that object in Explore. |
+| **Learn** | Three short reads: SPHEREx, visual magnitude and infrared light. |
+| **About** | Team, data sources and limitations. |
 
 ---
 
@@ -174,7 +186,9 @@ python -m scripts.build_demo
 
 ```
 .
-├── app.py              # Streamlit entry point: multipage navigation
+├── app.py              # Streamlit entry point: multipage navigation and language switch
+├── i18n.py             # English/Spanish texts for Home, Stories and Learn
+├── .streamlit/         # config.toml: dark theme and orange accent color
 ├── views/              # One file per page: home, explore, stories, learn, about
 ├── core/               # Data side; knows nothing about the web interface
 │   ├── spherex.py      # Search, cutouts, alignment, wavelength, common brightness scale
@@ -185,7 +199,8 @@ python -m scripts.build_demo
 │   ├── animate.py      # Blink GIF, visit averaging and difference image
 │   ├── demo.py         # Save/load/crop processed frames for demo mode
 │   └── content.py      # Read page texts from content/
-├── content/            # Markdown texts for pages and stories
+├── content/            # Markdown texts in English: home, learn, stories/<object>.md
+├── contentEs/          # The same texts in Spanish
 ├── data/demo/          # Saved frames for the five test objects
 ├── scripts/            # Demo builder and FITS exploration tools
 ├── requirements.txt
@@ -239,18 +254,24 @@ We want to be upfront about what this tool can and can't show.
 - **Live search depends on IRSA.** It takes about 1 minute (about 30 s more with WISE), and IRSA
   often answers with temporary errors (502/503). The app retries and then says IRSA is not
   responding; the demo mode exists for that reason.
+- **Spanish is partial.** Home, Stories and Learn are translated; Explore and About are in English only.
 - **It's a hackathon project.** Built in one weekend; no automated tests. Not a scientific tool.
 
 ---
 
 ## Data sources and credits
 
-- **SPHEREx** images: NASA/JPL-Caltech, served by
-  [IRSA](https://irsa.ipac.caltech.edu/) (NASA/IPAC Infrared Science Archive), collection `spherex_dr1`.
-- **WISE** images: AllWISE Atlas, band W2, served by IRSA (collection `wise_allwise`). WISE is a
-  joint project of the University of California, Los Angeles, and the Jet Propulsion
-  Laboratory/California Institute of Technology, funded by NASA.
-- **Positions and proper motions:** [SIMBAD](https://simbad.cfa.harvard.edu/simbad/) (CDS, Strasbourg), queried via its Harvard mirror.
+- **SPHEREx** images: NASA/JPL-Caltech, from the
+  [IRSA SPHEREx archive](https://irsa.ipac.caltech.edu/Missions/spherex.html) (NASA/IPAC Infrared
+  Science Archive), collection `spherex_dr1`. Images are found with IRSA's
+  [SIA service](https://irsa.ipac.caltech.edu/SIA) (through astroquery) and downloaded as cutouts,
+  following the [IRSA SPHEREx tutorials](https://caltech-ipac.github.io/irsa-tutorials/spherex/).
+- **WISE** images: AllWISE Atlas, band W2, from the
+  [IRSA WISE archive](https://irsa.ipac.caltech.edu/Missions/wise.html) (collection `wise_allwise`),
+  through the same SIA service. WISE is a joint project of the University of California, Los Angeles,
+  and the Jet Propulsion Laboratory/California Institute of Technology, funded by NASA.
+- **Positions and proper motions:** [SIMBAD](https://simbad.cfa.harvard.edu/simbad/) (CDS, Strasbourg),
+  queried by hand via its Harvard mirror on 2026-11-14 and stored in `core/targets.py`.
 - **Software:** [Astropy](https://www.astropy.org/), [astroquery](https://astroquery.readthedocs.io/),
   [reproject](https://reproject.readthedocs.io/), [NumPy](https://numpy.org/),
   [SciPy](https://scipy.org/), [Pillow](https://python-pillow.org/),
@@ -262,12 +283,14 @@ We want to be upfront about what this tool can and can't show.
 
 We used AI assistants (Claude Code and Claude) as a support tool, not as the author of the project.
 
-- **Code:** about 90% of the code was written by us. The AI was used mainly to help fix bugs,
-  get unstuck when we were blocked, translate code to English and write comments. Every piece of
-  AI-suggested code was reviewed and understood before it went into the project.
-- **Project discussion:** Claude was used to talk through parts of the project not related to code.
-- **Content:** all texts in the app (stories, Learn and About pages) were written by us. No images,
-  audio or video were generated with AI.
+- **Code:** we planned the project and wrote the first versions ourselves. During the weekend, and
+  especially on Sunday, a large part of the code (data pipeline improvements, page layout and
+  design, the language switch) was written by Claude Code at our request. Every change was
+  reviewed and tested by us before it went into the project.
+- **Project discussion:** Claude was used to talk through the problem, plan the steps and debug.
+- **Content:** the stories and the Home and Learn texts (English and Spanish) were written by us.
+  Short interface labels and captions were written with AI help. No images, audio or video were
+  generated with AI.
 - **Documentation:** this README was drafted with AI help and reviewed by the team.
 
 Scientific values shown in the app (positions, proper motions, dates, wavelengths) come from
@@ -279,10 +302,10 @@ SIMBAD and from the SPHEREx data itself, not from the AI.
 
 ## Team: Sidereus Nuncius
 
-| | Integrante | Área |
+| | Member | Role |
 |---|---|---|
-| <img src="https://github.com/eltruji04.png" width="40"> | [Santiago Trujillo](https://github.com/eltruji04) | data pipeline, integration and deployment |
-| <img src="https://github.com/luciahermon.png" width="40"> | [Lucía Hernández](https://github.com/luciahermon) | user interface, texts, slides and videos |
+| <img src="https://github.com/eltruji04.png" width="40"> | [Santiago Trujillo](https://github.com/eltruji04) | interface and web app |
+| <img src="https://github.com/luciahermon.png" width="40"> | [Lucía Hernández](https://github.com/luciahermon) | research, writing and slides |
 
 Named after Galileo's *Sidereus Nuncius* (1610), the first book of observations made with a telescope.
 

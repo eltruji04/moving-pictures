@@ -34,11 +34,27 @@ for column, target in zip(columns, TARGETS):
             st.session_state["source"] = "demo: " + target["label"]
 
 
-if st.button("Search SPHEREx live (~3 min)", disabled=coords is None):
-    with st.spinner("Downloading SPHEREx images..."):
-        frames = get_frames(ra, dec, size_deg)
-    st.session_state["frames"] = frames
-    st.session_state["source"] = "live"
+if st.button("Search SPHEREx live (~1 min)", disabled=coords is None):
+    bar = st.progress(0, text="Searching SPHEREx...")
+
+    def update_bar(done, total):
+        bar.progress(done / total, text=f"Downloaded {done} of {total} cutouts")
+
+    try:
+        with st.spinner("Downloading SPHEREx images..."):
+            frames = get_frames(ra, dec, size_deg, on_progress=update_bar)
+    except Exception as error:
+        bar.empty()
+        st.session_state.pop("frames", None)  # don't keep showing an old result
+        st.error(
+            "IRSA (the SPHEREx archive) is not responding right now. "
+            "Try again in a minute, or use the demo objects above."
+        )
+        st.caption(f"Details: {type(error).__name__}: {error}")
+    else:
+        bar.empty()
+        st.session_state["frames"] = frames
+        st.session_state["source"] = "live"
 
 
 if "frames" in st.session_state:

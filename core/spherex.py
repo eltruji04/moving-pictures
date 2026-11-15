@@ -33,6 +33,7 @@ def get_frames(ra_deg, dec_deg, size_deg, pm_ra_mas_yr=0.0, pm_dec_mas_yr=0.0, n
 
     ra_deg, dec_deg: J2000 coordinates. pm_*: proper motion in mas/yr (0 for fixed targets).
     on_progress: optional function called as on_progress(done, total) after each cutout.
+    Raises the last error if the IRSA search fails after all retries.
     Returns [] if nothing is found.
     """
     target = SkyCoord(
@@ -107,7 +108,7 @@ def _query_images(target):
             if attempt < DOWNLOAD_RETRIES - 1:
                 time.sleep(3)
             else:
-                return []
+                raise  # IRSA unreachable: let the caller tell this apart from "no data"
 
 
 def _spread_in_time(rows, n_frames):

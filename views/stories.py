@@ -38,9 +38,9 @@ def open_in_explore(target):
 
 st.title("Stories")
 st.caption("Five objects, five reasons to look twice. Three stars that move, two that change brightness. "
-           "(🏃 moves across the sky · ✨ changes brightness)")
+           "(🌌 moves across the sky · ✨ changes brightness)")
 
-tabs = st.tabs([("🏃 " if t["file_name"] in MOVERS else "✨ ") + t["label"] for t in TARGETS])
+tabs = st.tabs([("🌌 " if t["file_name"] in MOVERS else "✨ ") + t["label"] for t in TARGETS])
 
 for tab, target in zip(tabs, TARGETS):
     with tab:
@@ -49,7 +49,7 @@ for tab, target in zip(tabs, TARGETS):
         text_col, gif_col = st.columns([3, 2], gap="large")
         with text_col:
             st.badge("Moves across the sky" if moves else "Changes brightness",
-                     icon="🏃" if moves else "✨", color="gray")
+                     icon="🌌" if moves else "✨", color="gray")
             st.markdown(f"# {story['title'] or target['label']}")
             if story["tagline"]:
                 st.markdown(f"### *{story['tagline']}*")

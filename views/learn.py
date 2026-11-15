@@ -1,7 +1,5 @@
 import streamlit as st
 from core.content import read_markdown
 
-st.title("Learn")
-st.caption("SPHEREx, infrared light, and how a blink reveals what moves.")
-
+# learn.md brings its own "# Learn" title
 st.markdown(read_markdown("learn.md"))

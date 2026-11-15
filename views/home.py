@@ -22,7 +22,7 @@ with left:
     if st.button(t("Explore the sky", "Explorá el cielo"), icon="🔭", type="primary", width=500):
         st.switch_page("views/explore.py")
     st.page_link("views/stories.py", label=t("Read the stories", "Leé las historias"), icon="📖")
-    st.page_link("views/learn.py", label=t("How does a blink work?", "¿Cómo funciona un blink?"), icon="🎓")
+    st.page_link("views/learn.py", label=t("Learn about SPHEREx and infrared", "Aprendé sobre SPHEREx y el infrarrojo"), icon="🎓")
 with right:
     saved = load_frames(demo_name("barnard", track_target=False))
     frames = crop_frames(saved, HERO_FIELD_DEG)
